@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CHARLIE</title>
+  <style>body{margin:0;font:16px system-ui;background:#10131a;color:#edf2ff}main{max-width:760px;margin:auto;padding:20px}button{margin:4px;padding:9px}pre{white-space:pre-wrap;background:#181d28;padding:12px;border-radius:8px}</style>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+</head>
+<body>
+<main>
+  <h1>CHARLIE</h1>
+  <p id="status">Загрузка Python-мозга…</p>
+  <section aria-label="Управление CHARLIE">
+    <button id="sensors">Старт сенсоров</button><button id="flip">Переворот камеры</button>
+    <button id="sleep">Сон</button><button id="wake">Пробуждение</button><button id="save">Сохранение</button>
+    <button id="reward">Награда</button><button id="wiki">Russian Wikipedia</button><button id="ping">Ping</button>
+    <button id="reset">Reset</button><button id="disagree">Disagree</button>
+    <button id="import">Импорт памяти</button><button id="export">Экспорт памяти</button><button id="update">Обновление charlie.py</button>
+  </section>
+  <video id="camera" autoplay muted playsinline hidden></video>
+  <h2>Статистика мозга</h2><pre id="snapshot"></pre>
+  <h2>Память / язык / опыт / карта активности</h2><pre id="memory"></pre>
+  <h2>Логи процессов и логи мозга</h2><pre id="logs"></pre>
+</main>
+<script>
+let pyodide, cameraStream;
+async function runPython(name, ...args) { return pyodide.globals.get(name)(...args); }
+async function refresh() {
+  if (!pyodide) return;
+  await runPython('browser_tick');
+  document.querySelector('#snapshot').textContent = await runPython('browser_snapshot');
+  document.querySelector('#logs').textContent = await runPython('browser_logs');
+}
+async function startSensors() {
+  cameraStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+  const video = document.querySelector('#camera'); video.srcObject = cameraStream; video.hidden = false;
+}
+async function boot() {
+  try {
+    pyodide = await loadPyodide();
+    const source = await fetch('./charlie.py').then(r => { if (!r.ok) throw new Error('charlie.py не найден'); return r.text(); });
+    await pyodide.runPythonAsync(source);
+    document.querySelector('#status').textContent = 'CHARLIE готов.';
+    await refresh(); setInterval(refresh, 1000);
+  } catch (error) { document.querySelector('#status').textContent = `Ошибка запуска: ${error}`; }
+}
+document.querySelector('#sensors').onclick = startSensors;
+document.querySelector('#flip').onclick = () => runPython('browser_command', 'flip_camera');
+for (const id of ['sleep','wake','save','reward','wiki','ping','reset','disagree','update']) document.querySelector('#'+id).onclick = () => runPython('browser_command', id);
+document.querySelector('#export').onclick = async () => { localStorage.setItem('charlie-memory', await runPython('browser_export_memory')); };
+document.querySelector('#import').onclick = () => runPython('browser_import_memory', localStorage.getItem('charlie-memory') || '{}');
+boot();
+</script>
+</body>
+</html>
