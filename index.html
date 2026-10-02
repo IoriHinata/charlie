@@ -1,56 +1,66 @@
 <!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CHARLIE</title>
-  <style>body{margin:0;font:16px system-ui;background:#10131a;color:#edf2ff}main{max-width:760px;margin:auto;padding:20px}button{margin:4px;padding:9px}pre{white-space:pre-wrap;background:#181d28;padding:12px;border-radius:8px}</style>
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-</head>
-<body>
-<main>
-  <h1>CHARLIE</h1>
-  <p id="status">Загрузка Python-мозга…</p>
-  <section aria-label="Управление CHARLIE">
-    <button id="sensors">Старт сенсоров</button><button id="flip">Переворот камеры</button>
-    <button id="sleep">Сон</button><button id="wake">Пробуждение</button><button id="save">Сохранение</button>
-    <button id="reward">Награда</button><button id="wiki">Russian Wikipedia</button><button id="ping">Ping</button>
-    <button id="reset">Reset</button><button id="disagree">Disagree</button>
-    <button id="import">Импорт памяти</button><button id="export">Экспорт памяти</button><button id="update">Обновление charlie.py</button>
-  </section>
-  <video id="camera" autoplay muted playsinline hidden></video>
-  <h2>Статистика мозга</h2><pre id="snapshot"></pre>
-  <h2>Память / язык / опыт / карта активности</h2><pre id="memory"></pre>
-  <h2>Логи процессов и логи мозга</h2><pre id="logs"></pre>
-</main>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b12"><title>CHARLIE · локальный мозг</title>
+<style>
+:root{--bg:#060910;--card:#0d131c;--line:#223044;--text:#edf3f8;--muted:#8190a0;--accent:#67e8f9;--green:#5ee6a8;--yellow:#ffd166;--red:#ff6b7a;--purple:#b9a1ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#142338 0,#060910 42%);color:var(--text);font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;color:var(--text);cursor:pointer}main{width:min(980px,100%);margin:auto;padding:10px 10px 28px}
+header{position:sticky;top:0;z-index:5;background:rgba(6,9,16,.92);backdrop-filter:blur(12px);padding:7px 0 10px;border-bottom:1px solid #172231}.head{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-weight:800;letter-spacing:.08em;font-size:19px}.sub{font-size:10px;color:var(--muted);margin-left:6px}.connection{font-size:11px;border:1px solid var(--line);padding:6px 9px;border-radius:999px;color:var(--muted)}.connection.ok{color:var(--green);border-color:#225a47}.connection.bad{color:var(--red);border-color:#63313a}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:9px;margin-top:10px}.card{background:linear-gradient(145deg,rgba(17,25,37,.96),rgba(10,15,23,.96));border:1px solid var(--line);border-radius:14px;padding:11px;box-shadow:0 8px 28px rgba(0,0,0,.18)}.wide{margin-top:9px}.title{font-size:10px;letter-spacing:.13em;color:var(--muted);font-weight:700;margin-bottom:8px}.big{font-size:23px;font-weight:750}.event{margin-top:7px;color:#c4cfda;line-height:1.35;min-height:38px}.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.badge{border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:10px;color:var(--muted)}.badge.on{color:var(--green);border-color:#245f4b}.badge.sleep{color:var(--purple);border-color:#50417b}.badge.net{color:var(--accent);border-color:#245a68}
+video{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:10px;background:#020408;display:block}.camera-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.actions.top-actions{margin-top:9px}.btn{background:#131c28;border:1px solid #2a3a4d;border-radius:10px;padding:10px 8px;font-weight:700;transition:.15s}.btn:active{transform:scale(.98)}.btn.primary{border-color:#2e7f91;background:#102a32}.btn.sleep{border-color:#514479;background:#171328}.btn.wake{border-color:#346c59;background:#10251f}.btn.warn{border-color:#70474f;background:#24151a}.btn:disabled{opacity:.45;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stat{background:rgba(5,9,14,.62);border:1px solid #172333;border-radius:9px;padding:8px;min-width:0}.stat b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.section-head{display:flex;justify-content:space-between;align-items:center}.hint{font-size:10px;color:var(--muted)}canvas.map{display:block;width:100%;height:auto;aspect-ratio:5/1;background:#03060a;border-radius:9px;border:1px solid #15202d;image-rendering:pixelated}.log,.proc{height:180px;overflow:auto;background:#05080d;border:1px solid #141e2a;border-radius:9px;padding:7px;font:10px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}.line{padding:3px 0;border-bottom:1px solid #101822}.line .time{color:#637386}.line .kind{color:var(--accent)}.footer-note{text-align:center;color:#5f6e7e;font-size:10px;margin:12px 0}
+@media(max-width:700px){main{padding:7px 7px 24px}.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.actions{grid-template-columns:repeat(2,1fr)}.brand{font-size:17px}.big{font-size:20px}}
+</style><script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script></head>
+<body><main><header><div class="head"><div><span class="brand">CHARLIE</span><span class="sub">локальный развивающийся мозг · SNN 24 000</span></div><div id="conn" class="connection bad">● ЯДРО НЕ ЗАПУЩЕНО</div></div></header>
+<section class="card wide" id="brainStatus"><div class="section-head"><div class="title">ЛОКАЛЬНОЕ PYTHON-ЯДРО</div><div class="hint">charlie.py выполняется внутри этой HTML-страницы</div></div><div class="actions"><button id="chooseBrain" class="btn primary" onclick="document.getElementById('brainFile').click()">🧠 ЗАГРУЗИТЬ CHARLIE.PY</button><input id="brainFile" type="file" accept=".py,text/x-python" hidden><button class="btn" onclick="localStorage.removeItem('charlie_python_source');location.reload()">↻ ОБНОВИТЬ КОД</button></div><div class="actions" style="margin-top:7px"><button class="btn" onclick="exportMemoryFile()">📤 ЭКСПОРТ ПАМЯТИ</button><button class="btn" onclick="document.getElementById('memoryFile').click()">📥 ИМПОРТ ПАМЯТИ</button><input id="memoryFile" type="file" accept=".json,application/json" hidden></div></section>
+<div class="hero"><section class="card"><div class="title">ЗРЕНИЕ · СЛУХ · СЕНСОРЫ</div><video id="video" autoplay muted playsinline></video><div class="camera-actions"><button id="start" class="btn primary">▶ ЗАПУСТИТЬ СЕНСОРЫ</button><button id="flip" class="btn">↻ КАМЕРА</button></div><div class="badges"><span id="camBadge" class="badge">● камера выключена</span><span id="micBadge" class="badge">● микрофон выключен</span><span id="lanBadge" class="badge net">● локальный браузер</span></div></section>
+<section class="card"><div class="title">СОСТОЯНИЕ CHARLIE</div><div id="stage" class="big">подключение…</div><div id="state">—</div><div id="event" class="event">—</div><div class="badges"><span id="sleepBadge" class="badge">бодрствует</span><span id="internetBadge" class="badge">🌐 источников: 0</span></div><div class="actions top-actions"><button id="sleep" class="btn sleep">💤 СОН</button><button id="wake" class="btn wake">☀ ПРОБУЖДЕНИЕ</button></div></section></div>
+<section class="card wide"><div class="section-head"><div class="title">УПРАВЛЕНИЕ</div><div class="hint">полностью локальное ядро · без сервера</div></div><div class="actions"><button id="save" class="btn">💾 СОХРАНИТЬ</button><button id="reward" class="btn primary">★ НАГРАДА</button><button id="internet" class="btn primary">📖 РУССКАЯ ВИКИ</button><button id="ping" class="btn">⌁ ПРОВЕРИТЬ СВЯЗЬ</button></div><div class="actions" style="margin-top:7px"><button id="reset" class="btn warn">⚠ СБРОС ПАМЯТИ</button><button id="disagree" class="btn">✕ НЕ СОГЛАСЕН</button></div></section>
+<section class="card wide"><div class="section-head"><div class="title">НЕЙРОННОЕ ЯДРО</div><div class="hint">24 000 нейронов</div></div><div id="nn" class="stats"></div></section><section class="card wide"><div class="section-head"><div class="title">ПАМЯТЬ · ЯЗЫК · ОПЫТ</div><div id="wikiSource" class="hint">Источник: русская Википедия</div></div><div id="memory" class="stats"></div></section><section class="card wide"><div class="section-head"><div class="title">КАРТА АКТИВНОСТИ</div><div class="hint">зелёный вход · жёлтый hidden · фиолетовый выход</div></div><canvas id="map" class="map" width="600" height="120"></canvas></section><section class="card wide"><div class="title">ПРОЦЕССЫ</div><div id="process" class="proc"></div></section><section class="card wide"><div class="title">ЛОГ МОЗГА</div><div id="log" class="log"></div></section><div class="footer-note">CHARLIE работает прямо в этой HTML-странице. Сервер, LAN и WebSocket не используются. Интернет нужен только для загрузки среды Python/Pyodide и обучения Чарли по открытым источникам, когда это разрешено.</div><canvas id="capture" width="32" height="32" hidden></canvas>
 <script>
-let pyodide, cameraStream;
-async function runPython(name, ...args) { return pyodide.globals.get(name)(...args); }
-async function refresh() {
-  if (!pyodide) return;
-  await runPython('browser_tick');
-  document.querySelector('#snapshot').textContent = await runPython('browser_snapshot');
-  document.querySelector('#logs').textContent = await runPython('browser_logs');
+const $=id=>document.getElementById(id);let stream=null,running=false,face="user",vt=null,audio=null,src=null,proc=null,ab=[];
+let pyodide=null,brainTick=null,brainCmd=null,brainSnap=null,brainLogs=null,brainExport=null,brainImport=null,brainArticle=null,ready=false,lastFrame=null,lastAudio=null;
+const N=24000,W=600;
+function fmt(v){return Number(v||0).toLocaleString("ru-RU")};function note(t){$("event").textContent=t};function stat(v,l){return `<div class="stat"><b>${v}</b><span>${l}</span></div>`};function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function setConn(ok){$("conn").textContent=ok?"● ЯДРО ГОТОВО":"● ЯДРО НЕ ЗАПУЩЕНО";$("conn").className="connection "+(ok?"ok":"bad")}
+function saveLocal(){if(!ready)return;try{localStorage.setItem("charlie_brain_state",brainExport());localStorage.setItem("charlie_brain_version","local-browser-1")}catch(e){note("Не удалось сохранить локальную память: "+e.message)}}
+function loadLocal(){try{return localStorage.getItem("charlie_brain_state")}catch(e){return null}}
+async function loadBrainSource(source){
+  note("Загрузка локального Python-мозга…");
+  if(!pyodide){pyodide=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v314.0.7/full/"});await pyodide.loadPackage("numpy")}
+  await pyodide.runPythonAsync(source);
+  brainTick=pyodide.globals.get("browser_tick");brainCmd=pyodide.globals.get("browser_command");brainSnap=pyodide.globals.get("browser_snapshot");brainLogs=pyodide.globals.get("browser_logs");brainExport=pyodide.globals.get("browser_export_memory");brainImport=pyodide.globals.get("browser_import_memory");brainArticle=pyodide.globals.get("browser_learn_article");
+  const saved=loadLocal();if(saved){try{brainImport(saved)}catch(e){console.warn(e)}}
+  ready=true;setConn(true);note("CHARLIE запущена локально: Python + SNN внутри этой страницы");
+  if(!$('brainStatus')) return;
 }
-async function startSensors() {
-  cameraStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-  const video = document.querySelector('#camera'); video.srcObject = cameraStream; video.hidden = false;
+function exportMemoryFile(){if(!ready)return note("Загрузите charlie.py");try{const raw=brainExport();const blob=new Blob([raw],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="charlie_brain.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);note("Память CHARLIE выгружена в charlie_brain.json")}catch(e){note("Экспорт памяти: "+e.message)}}
+async function importMemoryFile(){const f=$("memoryFile").files?.[0];if(!f||!ready)return;try{const raw=await f.text();brainImport(raw);saveLocal();updateUI();note("Память CHARLIE импортирована")}catch(e){note("Импорт памяти: "+e.message)}}
+
+async function chooseBrain(){
+  const f=$('brainFile').files?.[0];if(!f)return;try{const source=await f.text();localStorage.setItem("charlie_python_source",source);await loadBrainSource(source)}catch(e){note("Ошибка загрузки charlie.py: "+e.message)}}
+async function boot(){
+  // Android package ships charlie.py next to index.html. Load it automatically,
+  // so no file picker is needed on first launch.
+  try{
+    const response=await fetch("./charlie.py",{cache:"no-store"});
+    if(response.ok){const source=await response.text();await loadBrainSource(source);return;}
+  }catch(e){console.warn("Bundled charlie.py unavailable",e)}
+  try{const cached=localStorage.getItem("charlie_python_source");if(cached){await loadBrainSource(cached);return}}
+  catch(e){}
+  note("Не удалось загрузить charlie.py из ресурсов приложения.");
 }
-async function boot() {
-  try {
-    pyodide = await loadPyodide();
-    const source = await fetch('./charlie.py').then(r => { if (!r.ok) throw new Error('charlie.py не найден'); return r.text(); });
-    await pyodide.runPythonAsync(source);
-    document.querySelector('#status').textContent = 'CHARLIE готов.';
-    await refresh(); setInterval(refresh, 1000);
-  } catch (error) { document.querySelector('#status').textContent = `Ошибка запуска: ${error}`; }
-}
-document.querySelector('#sensors').onclick = startSensors;
-document.querySelector('#flip').onclick = () => runPython('browser_command', 'flip_camera');
-for (const id of ['sleep','wake','save','reward','wiki','ping','reset','disagree','update']) document.querySelector('#'+id).onclick = () => runPython('browser_command', id);
-document.querySelector('#export').onclick = async () => { localStorage.setItem('charlie-memory', await runPython('browser_export_memory')); };
-document.querySelector('#import').onclick = () => runPython('browser_import_memory', localStorage.getItem('charlie-memory') || '{}');
-boot();
-</script>
-</body>
-</html>
+function cmd(c){if(!ready)return note("Сначала загрузите charlie.py");try{brainCmd(c);if(c==="save")saveLocal();if(c==="reset")saveLocal();if(c==="ping")note("Локальное ядро отвечает")}catch(e){note("Команда: "+e.message)}}
+function panel(p,d){if(p==="state"){$("stage").textContent=d.stage||"—";$('state').textContent="Состояние: "+(d.state||"—")+" · интерес "+Number(d.curiosity||0).toFixed(2);if(d.event)$('event').textContent=d.event;$('sleepBadge').textContent=d.sleeping?"💤 сон · консолидация":"☀ бодрствует";$('sleepBadge').className="badge "+(d.sleeping?"sleep":"on");$('internetBadge').textContent=d.internet_learning?"🌐 интернет: обучение":"🌐 источников: "+fmt(d.internet_items);$('internetBadge').className="badge "+(d.internet_learning?"net":"")}else if(p==="nn"){$('nn').innerHTML=stat(fmt(d.neurons),"всего")+stat(fmt(d.input),"вход")+stat(fmt(d.hidden),"hidden")+stat(fmt(d.output),"выход")+stat(fmt(d.steps),"шагов SNN")+stat(fmt(d.input_count),"input spike")+stat(fmt(d.hidden_count),"hidden spike")+stat(fmt(d.output_count),"output spike")+stat(Number(d.hidden_rate||0).toFixed(5),"активность")+stat(Number(d.dopamine||0).toFixed(3),"дофамин")}else if(p==="memory"){$('wikiSource').textContent="Источник: русская Википедия · материалов "+fmt(d.internet_items||0);$('memory').innerHTML=stat(fmt(d.hearing),"слух")+stat(fmt(d.seeing),"зрение")+stat(fmt(d.sound_units),"звуковые единицы")+stat(fmt(d.visual_units),"визуальные")+stat(fmt(d.concepts),"понятия")+stat(fmt(d.sequences),"последовательности")+stat(fmt(d.phonemes),"фонемы")+stat(fmt(d.lexicon),"лексикон")+stat(fmt(d.semantic),"семантика")+stat(fmt(d.transitions),"контекст")+stat(fmt(d.language_steps),"языковые шаги")+stat(fmt(d.vocalizations),"вокализации")}else if(p==="process"){$('process').innerHTML=Object.keys(d.process_last||{}).sort().map(k=>`<div>${k}: ${fmt(d.processes?.[k]||0)} — ${esc(d.process_last[k])}</div>`).join("")}else if(p==="logs"){$('log').innerHTML=d.map(x=>`<div class="line"><span class="time">${x.t}</span> <span class="kind">[${x.kind}]</span> ${esc(x.text)}</div>`).join("");$('log').scrollTop=$('log').scrollHeight}else if(p==="brain")draw(d)}
+function draw(t){const c=$('map'),ctx=c.getContext('2d'),img=ctx.createImageData(W,120),a=img.data;for(let i=0;i<W*120;i++){const p=i*4;a[p]=5;a[p+1]=8;a[p+2]=13;a[p+3]=255}function paint(ids,off,r,g,b){for(const id of ids||[]){const n=off+id;if(n<0||n>=N)continue;const x=n%W,y=Math.floor(n/W),p=(y*W+x)*4;a[p]=r;a[p+1]=g;a[p+2]=b}}paint(t.input_active,0,70,230,160);paint(t.hidden_active,512,245,185,70);paint(t.output_active,23968,180,110,255);ctx.putImageData(img,0,0)}
+function speak(t){if(!t||!("speechSynthesis"in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ru-RU";u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
+async function brainCycle(){if(!ready)return;try{const speech=brainTick(lastAudio,lastFrame);lastAudio=null;lastFrame=null;if(speech)speak(String(speech))}catch(e){note("Такт CHARLIE: "+e.message)}}
+async function updateUI(){if(!ready)return;try{const raw=brainSnap(true);const d=raw?.toJs?raw.toJs({dict_converter:Object.fromEntries}):raw;const lr=brainLogs();const logs=lr?.toJs?lr.toJs():lr;panel("state",d);panel("nn",{neurons:d.neurons,input:d.input_neurons,hidden:d.hidden_neurons,output:d.output_neurons,steps:d.steps,hidden_rate:d.hidden_rate,dopamine:d.dopamine,input_count:d.neurons_live?.input_count,hidden_count:d.neurons_live?.hidden_count,output_count:d.neurons_live?.output_count});panel("memory",d);panel("process",d);panel("logs",logs);panel("brain",d.neurons_live||{})}catch(e){console.warn(e)}}
+async function start(){if(!ready)return note("Загрузите charlie.py");if(running){stop();return}if(!navigator.mediaDevices?.getUserMedia){note("WebView не предоставил доступ к камере/микрофону. Проверьте системные разрешения CHARLIE.");return}try{stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:face},audio:true});$('video').srcObject=stream;running=true;$('start').textContent="■ ОСТАНОВИТЬ СЕНСОРЫ";$('camBadge').textContent="● камера включена";$('camBadge').className="badge on";$('micBadge').textContent="● микрофон включён";$('micBadge').className="badge on";audio=new (window.AudioContext||window.webkitAudioContext)();src=audio.createMediaStreamSource(stream);proc=audio.createScriptProcessor(4096,1,1);proc.onaudioprocess=e=>{if(!running)return;const a=e.inputBuffer.getChannelData(0),x=new Int16Array(a.length);for(let i=0;i<a.length;i++)x[i]=Math.max(-32768,Math.min(32767,a[i]*32767));ab.push(x);if(ab.length>=4){const len=ab.reduce((n,q)=>n+q.length,0),all=new Int16Array(len);let o=0;for(const q of ab){all.set(q,o);o+=q.length}ab=[];lastAudio=Array.from(all)}};src.connect(proc);proc.connect(audio.destination);vt=setInterval(frame,1000)}catch(e){note("Камера/микрофон: "+(e.message||e.name));$('camBadge').textContent="● камера недоступна";$('micBadge').textContent="● микрофон недоступен"}}
+function frame(){if(!running)return;const c=$('capture'),x=c.getContext('2d');x.drawImage($('video'),0,0,32,32);lastFrame=Array.from(x.getImageData(0,0,32,32).data)}
+async function flip(){if(!running)return;face=face==="user"?"environment":"user";try{stream?.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:face},audio:true});$('video').srcObject=stream}catch(e){note("Не удалось переключить камеру: "+e.name)}}
+function stop(){running=false;clearInterval(vt);try{proc?.disconnect();src?.disconnect();audio?.close()}catch(e){}stream?.getTracks().forEach(t=>t.stop());$('video').srcObject=null;$('start').textContent="▶ ЗАПУСТИТЬ СЕНСОРЫ";$('camBadge').textContent="● камера выключена";$('camBadge').className="badge";$('micBadge').textContent="● микрофон выключен";$('micBadge').className="badge";cmd("save")}
+async function wiki(){if(!ready)return;note("Чарли обращается к русской Википедии…");try{brainCmd("ping");const r=await fetch("https://ru.wikipedia.org/api/rest_v1/page/random/summary",{headers:{"Accept":"application/json"}});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();brainArticle(String(d.title||""),String(d.extract||""),"ru.wikipedia.org");note("Изучен источник: "+(d.title||"Русская Википедия"));updateUI()}catch(e){note("Русская Википедия недоступна: "+(e.message||e.name))}}
+async function autoWiki(){if(!ready)return;try{const raw=brainSnap(false),d=raw?.toJs?raw.toJs({dict_converter:Object.fromEntries}):raw;if(d.sleeping||d.internet_learning)return;const r=await fetch("https://ru.wikipedia.org/api/rest_v1/page/random/summary",{headers:{"Accept":"application/json"}});if(!r.ok)throw new Error("HTTP "+r.status);const x=await r.json();brainArticle(String(x.title||""),String(x.extract||""),"ru.wikipedia.org");updateUI()}catch(e){console.warn("CHARLIE internet learning:",e.message||e.name)}}
+$('start').onclick=start;$('flip').onclick=flip;$('sleep').onclick=()=>cmd("sleep");$('wake').onclick=()=>cmd("wake");$('internet').onclick=wiki;$('save').onclick=()=>{cmd("save");saveLocal();note("Память сохранена локально в браузере")};$('reset').onclick=()=>{if(confirm("Удалить сохранённую память CHARLIE и начать обучение заново?")){cmd("reset");saveLocal()}};$('reward').onclick=()=>cmd("reward");$('disagree').onclick=()=>cmd("disagree");$('ping').onclick=()=>cmd("ping");$('brainFile').onchange=chooseBrain;$('memoryFile').onchange=importMemoryFile;
+setInterval(brainCycle,120);setInterval(updateUI,700);setTimeout(autoWiki,10000);setInterval(autoWiki,180000);boot();
+</script></main></body></html>
