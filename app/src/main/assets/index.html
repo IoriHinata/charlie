@@ -94,9 +94,16 @@
     async function startSensors() {
       stopSensors();
       try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: cameraFacing } }, audio: true });
-        $('camera').srcObject = cameraStream; $('cameraEmpty').hidden = true; $('recordBadge').classList.add('active'); $('cameraState').textContent = 'СЕНСОРЫ ON'; $('cameraMetric').textContent = 'ON'; $('micMetric').textContent = 'ON'; startedAt = Date.now(); clearInterval(clockTimer); clockTimer = setInterval(updateClock, 1000); updateClock(); await command('sensors_start');
-      } catch (error) { $('cameraEmpty').hidden = false; $('cameraEmpty').innerHTML = `<div><span>Нет доступа к сенсорам</span>${error.message}</div>`; setStatus('Камера или микрофон не разрешены', 'error'); }
+        // Ask for video and audio separately. Some Android devices reject a combined
+        // request when AudioRecord is temporarily unavailable; that must not hide
+        // an otherwise working camera preview.
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: cameraFacing } }, audio: false });
+        let audioStream = null;
+        let audioError = null;
+        try { audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true }); } catch (error) { audioError = error; }
+        cameraStream = new MediaStream([...videoStream.getTracks(), ...(audioStream ? audioStream.getTracks() : [])]);
+        $('camera').srcObject = cameraStream; $('cameraEmpty').hidden = true; $('recordBadge').classList.add('active'); $('cameraState').textContent = audioStream ? 'СЕНСОРЫ ON' : 'КАМЕРА ON'; $('cameraMetric').textContent = 'ON'; $('micMetric').textContent = audioStream ? 'ON' : 'НЕТ'; startedAt = Date.now(); clearInterval(clockTimer); clockTimer = setInterval(updateClock, 1000); updateClock(); setStatus(audioError ? 'Камера готова; микрофон недоступен' : 'Камера и микрофон готовы', audioError ? '' : 'ready'); await command('sensors_start');
+      } catch (error) { const message = document.createElement('div'); const title = document.createElement('span'); title.textContent = 'Нет доступа к камере'; message.append(title, document.createTextNode(error.message)); $('cameraEmpty').hidden = false; $('cameraEmpty').replaceChildren(message); setStatus('Камера не разрешена или недоступна', 'error'); }
     }
     function stopSensors() { if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop()); cameraStream = null; $('camera').srcObject = null; $('cameraEmpty').hidden = false; $('recordBadge').classList.remove('active'); $('cameraState').textContent = 'ОЖИДАНИЕ'; $('cameraMetric').textContent = 'OFF'; $('micMetric').textContent = 'OFF'; clearInterval(clockTimer); $('cameraClock').textContent = '00:00'; }
     async function flipCamera() { cameraFacing = cameraFacing === 'user' ? 'environment' : 'user'; if (cameraStream) await startSensors(); await command('flip_camera'); }
