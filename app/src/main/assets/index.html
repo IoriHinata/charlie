@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>CHARLIE — локальный мозг</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <style>
+    :root { color-scheme: dark; --bg:#07111f; --panel:#0d1b2c; --panel-2:#10253b; --line:#1d3b58; --text:#e9f4ff; --muted:#91a9bd; --cyan:#5ce1e6; --green:#79efb4; --amber:#ffcc66; --red:#ff8091; }
+    * { box-sizing:border-box; } body { margin:0; min-width:320px; background:radial-gradient(circle at 15% -10%,#173858 0,var(--bg) 39rem); color:var(--text); font:14px/1.45 Inter,Roboto,Arial,sans-serif; }
+    button { font:inherit; color:inherit; cursor:pointer; } button:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+    .shell { max-width:1440px; margin:auto; padding:calc(16px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom)); }
+    .topbar { display:flex; gap:16px; align-items:center; justify-content:space-between; padding:4px 0 20px; }
+    .brand { display:flex; align-items:center; gap:12px; } .orb { width:40px; height:40px; border:1px solid var(--cyan); border-radius:50%; box-shadow:0 0 18px #31c6d477,inset 0 0 16px #31c6d455; background:radial-gradient(circle at 35% 30%,#d9ffff 0 3%,#50e4e8 7%,#0e6680 32%,#07111f 70%); }
+    h1 { font-size:18px; margin:0; letter-spacing:.14em; } .subtitle,.muted { color:var(--muted); } .subtitle { font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    .status { display:flex; align-items:center; gap:8px; min-width:0; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:#0a1828bb; color:var(--muted); } .status-dot { width:8px; height:8px; flex:none; border-radius:50%; background:var(--amber); box-shadow:0 0 10px currentColor; } .status.ready .status-dot { background:var(--green); } .status.error .status-dot { background:var(--red); }
+    .dashboard { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr); gap:16px; } .side { display:grid; gap:16px; align-content:start; }
+    .card { min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:linear-gradient(150deg,#10263cdd,#0a1727ee); box-shadow:0 14px 35px #0004; } .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); } .card-title { margin:0; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#c6e8fb; } .badge { border:1px solid #277b80; border-radius:999px; color:var(--cyan); padding:3px 8px; font-size:11px; }
+    .camera-wrap { position:relative; aspect-ratio:16/10; background:#03080f; overflow:hidden; } video { width:100%; height:100%; display:block; object-fit:cover; transform:scaleX(-1); } .camera-empty { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:var(--muted); background:radial-gradient(circle at 50% 45%,#12334a,#050b14 65%); } .camera-empty span { display:block; color:#d6edff; font-size:16px; margin-bottom:4px; }
+    .camera-overlay { position:absolute; inset:0; pointer-events:none; padding:12px; display:flex; justify-content:space-between; align-items:flex-start; background:linear-gradient(#0007,transparent 25%,transparent 75%,#0008); } .rec { color:#fff; font-size:11px; padding:4px 7px; border-radius:5px; background:#b92f43; display:none; } .rec.active { display:block; } .camera-time { font-variant-numeric:tabular-nums; font-size:11px; color:#d7f2ff; text-shadow:0 1px 4px #000; }
+    .camera-actions,.controls { padding:12px; display:grid; gap:8px; } .camera-actions { grid-template-columns:1.4fr 1fr 1fr; } button.action { border:1px solid #28506c; border-radius:9px; padding:10px 8px; background:#112940; transition:.15s; } button.action:hover { background:#183955; border-color:#3f759a; } button.primary { color:#02131a; font-weight:700; border-color:var(--cyan); background:var(--cyan); } button.danger { color:#ffd8de; border-color:#7b3443; background:#311722; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--line); } .metric { padding:13px 14px; border-right:1px solid var(--line); } .metric:last-child { border:0; } .metric-value { display:block; margin-top:3px; font-size:20px; font-weight:700; color:var(--cyan); overflow-wrap:anywhere; } .metric-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+    .brain-content { padding:14px; } .state-json { margin:0; min-height:74px; white-space:pre-wrap; overflow-wrap:anywhere; color:#cfe9ff; font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; } .activity-map { display:grid; grid-template-columns:repeat(16,1fr); gap:4px; margin-top:12px; } .cell { aspect-ratio:1; border-radius:2px; background:#133149; } .cell:nth-child(3n) { background:#17657a; } .cell:nth-child(5n) { background:#1d9ca5; } .cell:nth-child(11n) { background:#65e5dc; }
+    .controls { grid-template-columns:repeat(2,minmax(0,1fr)); } .controls .action { min-height:45px; text-align:left; } .controls .icon { display:inline-block; width:20px; color:var(--cyan); font-weight:bold; } .controls .wide { grid-column:span 2; }
+    .log { margin:0; padding:13px 15px; min-height:150px; max-height:270px; overflow:auto; color:#b9d3e5; white-space:pre-wrap; font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; background:#081422aa; } .footer-note { margin:14px 2px 0; color:#6f8fa8; font-size:11px; }
+    @media (max-width:860px) { .dashboard { grid-template-columns:1fr; } .side { grid-template-columns:1fr 1fr; } .side .full { grid-column:span 2; } }
+    @media (max-width:560px) { .shell { padding-inline:10px; } .topbar { align-items:flex-start; } .status { max-width:145px; border-radius:10px; } .side { grid-template-columns:1fr; } .side .full { grid-column:auto; } .metrics { grid-template-columns:repeat(3,1fr); } .metric { padding:10px 8px; } .metric-value { font-size:16px; } .camera-actions { grid-template-columns:1fr 1fr; } .camera-actions .primary { grid-column:span 2; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="orb" aria-hidden="true"></div><div><h1>CHARLIE</h1><div class="subtitle">Локальный Pyodide-мозг</div></div></div>
+      <div id="status" class="status" role="status"><span class="status-dot"></span><span id="statusText">Загрузка Python-мозга…</span></div>
+    </header>
+    <section class="dashboard">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">Камера и сенсоры</h2><span id="cameraState" class="badge">ОЖИДАНИЕ</span></div>
+        <div class="camera-wrap">
+          <video id="camera" autoplay muted playsinline aria-label="Вид с камеры CHARLIE"></video>
+          <div id="cameraEmpty" class="camera-empty"><div><span>Камера не включена</span>Нажмите «Старт сенсоров», чтобы дать CHARLIE зрение и слух.</div></div>
+          <div class="camera-overlay"><span id="recordBadge" class="rec">● SENSORS ON</span><span id="cameraClock" class="camera-time">00:00</span></div>
+        </div>
+        <div class="camera-actions"><button id="sensors" class="action primary">▶ Старт сенсоров</button><button id="stopSensors" class="action danger">■ Стоп</button><button id="flip" class="action">↺ Перевернуть</button></div>
+        <div class="metrics"><div class="metric"><span class="metric-label">Камера</span><strong id="cameraMetric" class="metric-value">OFF</strong></div><div class="metric"><span class="metric-label">Микрофон</span><strong id="micMetric" class="metric-value">OFF</strong></div><div class="metric"><span class="metric-label">Состояние</span><strong id="awakeMetric" class="metric-value">—</strong></div></div>
+      </div>
+      <div class="side">
+        <section class="card">
+          <div class="card-head"><h2 class="card-title">Статистика мозга</h2><span class="badge">LIVE</span></div>
+          <div class="brain-content"><div class="metrics" style="margin:-14px -14px 14px"><div class="metric"><span class="metric-label">Опыт</span><strong id="experienceMetric" class="metric-value">0</strong></div><div class="metric"><span class="metric-label">Команда</span><strong id="commandMetric" class="metric-value">—</strong></div><div class="metric"><span class="metric-label">Такт</span><strong id="tickMetric" class="metric-value">0</strong></div></div><pre id="snapshot" class="state-json">Ожидание снимка мозга…</pre><div id="activityMap" class="activity-map" aria-label="Карта активности мозга"></div></div>
+        </section>
+        <section class="card full">
+          <div class="card-head"><h2 class="card-title">Управление CHARLIE</h2><span class="badge">ЛОКАЛЬНО</span></div>
+          <div class="controls">
+            <button id="sleep" class="action"><span class="icon">◐</span>Сон</button><button id="wake" class="action"><span class="icon">☀</span>Пробуждение</button>
+            <button id="save" class="action"><span class="icon">▣</span>Сохранение</button><button id="reward" class="action"><span class="icon">★</span>Награда</button>
+            <button id="wiki" class="action"><span class="icon">W</span>Russian Wikipedia</button><button id="ping" class="action"><span class="icon">↯</span>Ping</button>
+            <button id="reset" class="action"><span class="icon">↺</span>Reset</button><button id="disagree" class="action"><span class="icon">×</span>Disagree</button>
+            <button id="import" class="action"><span class="icon">↓</span>Импорт памяти</button><button id="export" class="action"><span class="icon">↑</span>Экспорт памяти</button>
+            <button id="update" class="action wide"><span class="icon">⌘</span>Обновление charlie.py</button>
+          </div>
+        </section>
+        <section class="card full">
+          <div class="card-head"><h2 class="card-title">Память · язык · опыт</h2><span class="badge">СОХРАНЯЕТСЯ ЛОКАЛЬНО</span></div>
+          <pre id="memory" class="log" style="min-height:90px;max-height:160px">Память будет показана после запуска мозга…</pre>
+        </section>
+      </div>
+      <section class="card full">
+        <div class="card-head"><h2 class="card-title">Логи процессов и мозга</h2><span id="logCount" class="badge">0 СОБЫТИЙ</span></div>
+        <pre id="logs" class="log">CHARLIE готовится к запуску…</pre>
+      </section>
+    </section>
+    <p class="footer-note">CHARLIE работает локально в WebView. Интернет используется только для внешних ресурсов Pyodide и обучения.</p>
+  </main>
+  <script>
+    let pyodide, cameraStream, cameraFacing = 'user', tick = 0, startedAt = 0, clockTimer;
+    const $ = (id) => document.getElementById(id);
+    for (let i = 0; i < 64; i += 1) $('activityMap').insertAdjacentHTML('beforeend', '<span class="cell"></span>');
+
+    async function runPython(name, ...args) { return pyodide.globals.get(name)(...args); }
+    function setStatus(text, mode = '') { $('statusText').textContent = text; $('status').className = `status ${mode}`; }
+    function renderState(snapshot) {
+      $('snapshot').textContent = snapshot;
+      $('memory').textContent = snapshot;
+      try { const state = JSON.parse(snapshot); $('experienceMetric').textContent = state.experience ?? 0; $('commandMetric').textContent = state.last_command ?? '—'; $('awakeMetric').textContent = state.awake ? 'БОДРСТВ.' : 'СОН'; } catch (_) { /* The brain may return non-JSON text; keep it visible. */ }
+      $('tickMetric').textContent = tick;
+    }
+    async function refresh() {
+      if (!pyodide) return;
+      try { await runPython('browser_tick'); tick += 1; renderState(await runPython('browser_snapshot')); const logs = await runPython('browser_logs'); $('logs').textContent = logs; $('logCount').textContent = `${logs ? logs.split('\n').length : 0} СОБЫТИЙ`; } catch (error) { setStatus(`Ошибка связи с мозгом: ${error}`, 'error'); }
+    }
+    function updateClock() { const elapsed = Math.floor((Date.now() - startedAt) / 1000); $('cameraClock').textContent = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`; }
+    async function startSensors() {
+      stopSensors();
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: cameraFacing } }, audio: true });
+        $('camera').srcObject = cameraStream; $('cameraEmpty').hidden = true; $('recordBadge').classList.add('active'); $('cameraState').textContent = 'СЕНСОРЫ ON'; $('cameraMetric').textContent = 'ON'; $('micMetric').textContent = 'ON'; startedAt = Date.now(); clearInterval(clockTimer); clockTimer = setInterval(updateClock, 1000); updateClock(); await command('sensors_start');
+      } catch (error) { $('cameraEmpty').hidden = false; $('cameraEmpty').innerHTML = `<div><span>Нет доступа к сенсорам</span>${error.message}</div>`; setStatus('Камера или микрофон не разрешены', 'error'); }
+    }
+    function stopSensors() { if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop()); cameraStream = null; $('camera').srcObject = null; $('cameraEmpty').hidden = false; $('recordBadge').classList.remove('active'); $('cameraState').textContent = 'ОЖИДАНИЕ'; $('cameraMetric').textContent = 'OFF'; $('micMetric').textContent = 'OFF'; clearInterval(clockTimer); $('cameraClock').textContent = '00:00'; }
+    async function flipCamera() { cameraFacing = cameraFacing === 'user' ? 'environment' : 'user'; if (cameraStream) await startSensors(); await command('flip_camera'); }
+    async function command(name) { if (!pyodide) return; await runPython('browser_command', name); await refresh(); }
+    async function boot() {
+      try { pyodide = await loadPyodide(); const response = await fetch('./charlie.py'); if (!response.ok) throw new Error('charlie.py не найден'); await pyodide.runPythonAsync(await response.text()); setStatus('CHARLIE готов', 'ready'); await refresh(); setInterval(refresh, 1000); } catch (error) { setStatus(`Ошибка запуска: ${error}`, 'error'); $('logs').textContent = String(error); }
+    }
+    $('sensors').onclick = startSensors; $('stopSensors').onclick = stopSensors; $('flip').onclick = flipCamera;
+    for (const id of ['sleep','wake','save','reward','wiki','ping','reset','disagree','update']) $(id).onclick = () => command(id);
+    $('export').onclick = async () => { localStorage.setItem('charlie-memory', await runPython('browser_export_memory')); await command('memory_export'); };
+    $('import').onclick = async () => { await runPython('browser_import_memory', localStorage.getItem('charlie-memory') || '{}'); await command('memory_import'); };
+    boot();
+  </script>
+</body>
+</html>
