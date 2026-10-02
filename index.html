@@ -1,66 +1,114 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b12"><title>CHARLIE · локальный мозг</title>
-<style>
-:root{--bg:#060910;--card:#0d131c;--line:#223044;--text:#edf3f8;--muted:#8190a0;--accent:#67e8f9;--green:#5ee6a8;--yellow:#ffd166;--red:#ff6b7a;--purple:#b9a1ff}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#142338 0,#060910 42%);color:var(--text);font:14px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;color:var(--text);cursor:pointer}main{width:min(980px,100%);margin:auto;padding:10px 10px 28px}
-header{position:sticky;top:0;z-index:5;background:rgba(6,9,16,.92);backdrop-filter:blur(12px);padding:7px 0 10px;border-bottom:1px solid #172231}.head{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-weight:800;letter-spacing:.08em;font-size:19px}.sub{font-size:10px;color:var(--muted);margin-left:6px}.connection{font-size:11px;border:1px solid var(--line);padding:6px 9px;border-radius:999px;color:var(--muted)}.connection.ok{color:var(--green);border-color:#225a47}.connection.bad{color:var(--red);border-color:#63313a}
-.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:9px;margin-top:10px}.card{background:linear-gradient(145deg,rgba(17,25,37,.96),rgba(10,15,23,.96));border:1px solid var(--line);border-radius:14px;padding:11px;box-shadow:0 8px 28px rgba(0,0,0,.18)}.wide{margin-top:9px}.title{font-size:10px;letter-spacing:.13em;color:var(--muted);font-weight:700;margin-bottom:8px}.big{font-size:23px;font-weight:750}.event{margin-top:7px;color:#c4cfda;line-height:1.35;min-height:38px}.badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}.badge{border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:10px;color:var(--muted)}.badge.on{color:var(--green);border-color:#245f4b}.badge.sleep{color:var(--purple);border-color:#50417b}.badge.net{color:var(--accent);border-color:#245a68}
-video{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:10px;background:#020408;display:block}.camera-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.actions.top-actions{margin-top:9px}.btn{background:#131c28;border:1px solid #2a3a4d;border-radius:10px;padding:10px 8px;font-weight:700;transition:.15s}.btn:active{transform:scale(.98)}.btn.primary{border-color:#2e7f91;background:#102a32}.btn.sleep{border-color:#514479;background:#171328}.btn.wake{border-color:#346c59;background:#10251f}.btn.warn{border-color:#70474f;background:#24151a}.btn:disabled{opacity:.45;cursor:default}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stat{background:rgba(5,9,14,.62);border:1px solid #172333;border-radius:9px;padding:8px;min-width:0}.stat b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat span{display:block;color:var(--muted);font-size:9px;margin-top:2px}
-.section-head{display:flex;justify-content:space-between;align-items:center}.hint{font-size:10px;color:var(--muted)}canvas.map{display:block;width:100%;height:auto;aspect-ratio:5/1;background:#03060a;border-radius:9px;border:1px solid #15202d;image-rendering:pixelated}.log,.proc{height:180px;overflow:auto;background:#05080d;border:1px solid #141e2a;border-radius:9px;padding:7px;font:10px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}.line{padding:3px 0;border-bottom:1px solid #101822}.line .time{color:#637386}.line .kind{color:var(--accent)}.footer-note{text-align:center;color:#5f6e7e;font-size:10px;margin:12px 0}
-@media(max-width:700px){main{padding:7px 7px 24px}.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.actions{grid-template-columns:repeat(2,1fr)}.brand{font-size:17px}.big{font-size:20px}}
-</style><script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script></head>
-<body><main><header><div class="head"><div><span class="brand">CHARLIE</span><span class="sub">локальный развивающийся мозг · SNN 24 000</span></div><div id="conn" class="connection bad">● ЯДРО НЕ ЗАПУЩЕНО</div></div></header>
-<section class="card wide" id="brainStatus"><div class="section-head"><div class="title">ЛОКАЛЬНОЕ PYTHON-ЯДРО</div><div class="hint">charlie.py выполняется внутри этой HTML-страницы</div></div><div class="actions"><button id="chooseBrain" class="btn primary" onclick="document.getElementById('brainFile').click()">🧠 ЗАГРУЗИТЬ CHARLIE.PY</button><input id="brainFile" type="file" accept=".py,text/x-python" hidden><button class="btn" onclick="localStorage.removeItem('charlie_python_source');location.reload()">↻ ОБНОВИТЬ КОД</button></div><div class="actions" style="margin-top:7px"><button class="btn" onclick="exportMemoryFile()">📤 ЭКСПОРТ ПАМЯТИ</button><button class="btn" onclick="document.getElementById('memoryFile').click()">📥 ИМПОРТ ПАМЯТИ</button><input id="memoryFile" type="file" accept=".json,application/json" hidden></div></section>
-<div class="hero"><section class="card"><div class="title">ЗРЕНИЕ · СЛУХ · СЕНСОРЫ</div><video id="video" autoplay muted playsinline></video><div class="camera-actions"><button id="start" class="btn primary">▶ ЗАПУСТИТЬ СЕНСОРЫ</button><button id="flip" class="btn">↻ КАМЕРА</button></div><div class="badges"><span id="camBadge" class="badge">● камера выключена</span><span id="micBadge" class="badge">● микрофон выключен</span><span id="lanBadge" class="badge net">● локальный браузер</span></div></section>
-<section class="card"><div class="title">СОСТОЯНИЕ CHARLIE</div><div id="stage" class="big">подключение…</div><div id="state">—</div><div id="event" class="event">—</div><div class="badges"><span id="sleepBadge" class="badge">бодрствует</span><span id="internetBadge" class="badge">🌐 источников: 0</span></div><div class="actions top-actions"><button id="sleep" class="btn sleep">💤 СОН</button><button id="wake" class="btn wake">☀ ПРОБУЖДЕНИЕ</button></div></section></div>
-<section class="card wide"><div class="section-head"><div class="title">УПРАВЛЕНИЕ</div><div class="hint">полностью локальное ядро · без сервера</div></div><div class="actions"><button id="save" class="btn">💾 СОХРАНИТЬ</button><button id="reward" class="btn primary">★ НАГРАДА</button><button id="internet" class="btn primary">📖 РУССКАЯ ВИКИ</button><button id="ping" class="btn">⌁ ПРОВЕРИТЬ СВЯЗЬ</button></div><div class="actions" style="margin-top:7px"><button id="reset" class="btn warn">⚠ СБРОС ПАМЯТИ</button><button id="disagree" class="btn">✕ НЕ СОГЛАСЕН</button></div></section>
-<section class="card wide"><div class="section-head"><div class="title">НЕЙРОННОЕ ЯДРО</div><div class="hint">24 000 нейронов</div></div><div id="nn" class="stats"></div></section><section class="card wide"><div class="section-head"><div class="title">ПАМЯТЬ · ЯЗЫК · ОПЫТ</div><div id="wikiSource" class="hint">Источник: русская Википедия</div></div><div id="memory" class="stats"></div></section><section class="card wide"><div class="section-head"><div class="title">КАРТА АКТИВНОСТИ</div><div class="hint">зелёный вход · жёлтый hidden · фиолетовый выход</div></div><canvas id="map" class="map" width="600" height="120"></canvas></section><section class="card wide"><div class="title">ПРОЦЕССЫ</div><div id="process" class="proc"></div></section><section class="card wide"><div class="title">ЛОГ МОЗГА</div><div id="log" class="log"></div></section><div class="footer-note">CHARLIE работает прямо в этой HTML-странице. Сервер, LAN и WebSocket не используются. Интернет нужен только для загрузки среды Python/Pyodide и обучения Чарли по открытым источникам, когда это разрешено.</div><canvas id="capture" width="32" height="32" hidden></canvas>
-<script>
-const $=id=>document.getElementById(id);let stream=null,running=false,face="user",vt=null,audio=null,src=null,proc=null,ab=[];
-let pyodide=null,brainTick=null,brainCmd=null,brainSnap=null,brainLogs=null,brainExport=null,brainImport=null,brainArticle=null,ready=false,lastFrame=null,lastAudio=null;
-const N=24000,W=600;
-function fmt(v){return Number(v||0).toLocaleString("ru-RU")};function note(t){$("event").textContent=t};function stat(v,l){return `<div class="stat"><b>${v}</b><span>${l}</span></div>`};function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
-function setConn(ok){$("conn").textContent=ok?"● ЯДРО ГОТОВО":"● ЯДРО НЕ ЗАПУЩЕНО";$("conn").className="connection "+(ok?"ok":"bad")}
-function saveLocal(){if(!ready)return;try{localStorage.setItem("charlie_brain_state",brainExport());localStorage.setItem("charlie_brain_version","local-browser-1")}catch(e){note("Не удалось сохранить локальную память: "+e.message)}}
-function loadLocal(){try{return localStorage.getItem("charlie_brain_state")}catch(e){return null}}
-async function loadBrainSource(source){
-  note("Загрузка локального Python-мозга…");
-  if(!pyodide){pyodide=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v314.0.7/full/"});await pyodide.loadPackage("numpy")}
-  await pyodide.runPythonAsync(source);
-  brainTick=pyodide.globals.get("browser_tick");brainCmd=pyodide.globals.get("browser_command");brainSnap=pyodide.globals.get("browser_snapshot");brainLogs=pyodide.globals.get("browser_logs");brainExport=pyodide.globals.get("browser_export_memory");brainImport=pyodide.globals.get("browser_import_memory");brainArticle=pyodide.globals.get("browser_learn_article");
-  const saved=loadLocal();if(saved){try{brainImport(saved)}catch(e){console.warn(e)}}
-  ready=true;setConn(true);note("CHARLIE запущена локально: Python + SNN внутри этой страницы");
-  if(!$('brainStatus')) return;
-}
-function exportMemoryFile(){if(!ready)return note("Загрузите charlie.py");try{const raw=brainExport();const blob=new Blob([raw],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="charlie_brain.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);note("Память CHARLIE выгружена в charlie_brain.json")}catch(e){note("Экспорт памяти: "+e.message)}}
-async function importMemoryFile(){const f=$("memoryFile").files?.[0];if(!f||!ready)return;try{const raw=await f.text();brainImport(raw);saveLocal();updateUI();note("Память CHARLIE импортирована")}catch(e){note("Импорт памяти: "+e.message)}}
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>CHARLIE — локальный мозг</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <style>
+    :root { color-scheme: dark; --bg:#07111f; --panel:#0d1b2c; --panel-2:#10253b; --line:#1d3b58; --text:#e9f4ff; --muted:#91a9bd; --cyan:#5ce1e6; --green:#79efb4; --amber:#ffcc66; --red:#ff8091; }
+    * { box-sizing:border-box; } body { margin:0; min-width:320px; background:radial-gradient(circle at 15% -10%,#173858 0,var(--bg) 39rem); color:var(--text); font:14px/1.45 Inter,Roboto,Arial,sans-serif; }
+    button { font:inherit; color:inherit; cursor:pointer; } button:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+    .shell { max-width:1440px; margin:auto; padding:calc(16px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom)); }
+    .topbar { display:flex; gap:16px; align-items:center; justify-content:space-between; padding:4px 0 20px; }
+    .brand { display:flex; align-items:center; gap:12px; } .orb { width:40px; height:40px; border:1px solid var(--cyan); border-radius:50%; box-shadow:0 0 18px #31c6d477,inset 0 0 16px #31c6d455; background:radial-gradient(circle at 35% 30%,#d9ffff 0 3%,#50e4e8 7%,#0e6680 32%,#07111f 70%); }
+    h1 { font-size:18px; margin:0; letter-spacing:.14em; } .subtitle,.muted { color:var(--muted); } .subtitle { font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+    .status { display:flex; align-items:center; gap:8px; min-width:0; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:#0a1828bb; color:var(--muted); } .status-dot { width:8px; height:8px; flex:none; border-radius:50%; background:var(--amber); box-shadow:0 0 10px currentColor; } .status.ready .status-dot { background:var(--green); } .status.error .status-dot { background:var(--red); }
+    .dashboard { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr); gap:16px; } .side { display:grid; gap:16px; align-content:start; }
+    .card { min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:linear-gradient(150deg,#10263cdd,#0a1727ee); box-shadow:0 14px 35px #0004; } .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); } .card-title { margin:0; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#c6e8fb; } .badge { border:1px solid #277b80; border-radius:999px; color:var(--cyan); padding:3px 8px; font-size:11px; }
+    .camera-wrap { position:relative; aspect-ratio:16/10; background:#03080f; overflow:hidden; } video { width:100%; height:100%; display:block; object-fit:cover; transform:scaleX(-1); } .camera-empty { position:absolute; inset:0; display:grid; place-items:center; text-align:center; color:var(--muted); background:radial-gradient(circle at 50% 45%,#12334a,#050b14 65%); } .camera-empty span { display:block; color:#d6edff; font-size:16px; margin-bottom:4px; }
+    .camera-overlay { position:absolute; inset:0; pointer-events:none; padding:12px; display:flex; justify-content:space-between; align-items:flex-start; background:linear-gradient(#0007,transparent 25%,transparent 75%,#0008); } .rec { color:#fff; font-size:11px; padding:4px 7px; border-radius:5px; background:#b92f43; display:none; } .rec.active { display:block; } .camera-time { font-variant-numeric:tabular-nums; font-size:11px; color:#d7f2ff; text-shadow:0 1px 4px #000; }
+    .camera-actions,.controls { padding:12px; display:grid; gap:8px; } .camera-actions { grid-template-columns:1.4fr 1fr 1fr; } button.action { border:1px solid #28506c; border-radius:9px; padding:10px 8px; background:#112940; transition:.15s; } button.action:hover { background:#183955; border-color:#3f759a; } button.primary { color:#02131a; font-weight:700; border-color:var(--cyan); background:var(--cyan); } button.danger { color:#ffd8de; border-color:#7b3443; background:#311722; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid var(--line); } .metric { padding:13px 14px; border-right:1px solid var(--line); } .metric:last-child { border:0; } .metric-value { display:block; margin-top:3px; font-size:20px; font-weight:700; color:var(--cyan); overflow-wrap:anywhere; } .metric-label { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+    .brain-content { padding:14px; } .state-json { margin:0; min-height:74px; white-space:pre-wrap; overflow-wrap:anywhere; color:#cfe9ff; font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; } .activity-map { display:grid; grid-template-columns:repeat(16,1fr); gap:4px; margin-top:12px; } .cell { aspect-ratio:1; border-radius:2px; background:#133149; } .cell:nth-child(3n) { background:#17657a; } .cell:nth-child(5n) { background:#1d9ca5; } .cell:nth-child(11n) { background:#65e5dc; }
+    .controls { grid-template-columns:repeat(2,minmax(0,1fr)); } .controls .action { min-height:45px; text-align:left; } .controls .icon { display:inline-block; width:20px; color:var(--cyan); font-weight:bold; } .controls .wide { grid-column:span 2; }
+    .log { margin:0; padding:13px 15px; min-height:150px; max-height:270px; overflow:auto; color:#b9d3e5; white-space:pre-wrap; font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; background:#081422aa; } .footer-note { margin:14px 2px 0; color:#6f8fa8; font-size:11px; }
+    @media (max-width:860px) { .dashboard { grid-template-columns:1fr; } .side { grid-template-columns:1fr 1fr; } .side .full { grid-column:span 2; } }
+    @media (max-width:560px) { .shell { padding-inline:10px; } .topbar { align-items:flex-start; } .status { max-width:145px; border-radius:10px; } .side { grid-template-columns:1fr; } .side .full { grid-column:auto; } .metrics { grid-template-columns:repeat(3,1fr); } .metric { padding:10px 8px; } .metric-value { font-size:16px; } .camera-actions { grid-template-columns:1fr 1fr; } .camera-actions .primary { grid-column:span 2; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="orb" aria-hidden="true"></div><div><h1>CHARLIE</h1><div class="subtitle">Локальный Pyodide-мозг</div></div></div>
+      <div id="status" class="status" role="status"><span class="status-dot"></span><span id="statusText">Загрузка Python-мозга…</span></div>
+    </header>
+    <section class="dashboard">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">Камера и сенсоры</h2><span id="cameraState" class="badge">ОЖИДАНИЕ</span></div>
+        <div class="camera-wrap">
+          <video id="camera" autoplay muted playsinline aria-label="Вид с камеры CHARLIE"></video>
+          <div id="cameraEmpty" class="camera-empty"><div><span>Камера не включена</span>Нажмите «Старт сенсоров», чтобы дать CHARLIE зрение и слух.</div></div>
+          <div class="camera-overlay"><span id="recordBadge" class="rec">● SENSORS ON</span><span id="cameraClock" class="camera-time">00:00</span></div>
+        </div>
+        <div class="camera-actions"><button id="sensors" class="action primary">▶ Старт сенсоров</button><button id="stopSensors" class="action danger">■ Стоп</button><button id="flip" class="action">↺ Перевернуть</button></div>
+        <div class="metrics"><div class="metric"><span class="metric-label">Камера</span><strong id="cameraMetric" class="metric-value">OFF</strong></div><div class="metric"><span class="metric-label">Микрофон</span><strong id="micMetric" class="metric-value">OFF</strong></div><div class="metric"><span class="metric-label">Состояние</span><strong id="awakeMetric" class="metric-value">—</strong></div></div>
+      </div>
+      <div class="side">
+        <section class="card">
+          <div class="card-head"><h2 class="card-title">Статистика мозга</h2><span class="badge">LIVE</span></div>
+          <div class="brain-content"><div class="metrics" style="margin:-14px -14px 14px"><div class="metric"><span class="metric-label">Опыт</span><strong id="experienceMetric" class="metric-value">0</strong></div><div class="metric"><span class="metric-label">Команда</span><strong id="commandMetric" class="metric-value">—</strong></div><div class="metric"><span class="metric-label">Такт</span><strong id="tickMetric" class="metric-value">0</strong></div></div><pre id="snapshot" class="state-json">Ожидание снимка мозга…</pre><div id="activityMap" class="activity-map" aria-label="Карта активности мозга"></div></div>
+        </section>
+        <section class="card full">
+          <div class="card-head"><h2 class="card-title">Управление CHARLIE</h2><span class="badge">ЛОКАЛЬНО</span></div>
+          <div class="controls">
+            <button id="sleep" class="action"><span class="icon">◐</span>Сон</button><button id="wake" class="action"><span class="icon">☀</span>Пробуждение</button>
+            <button id="save" class="action"><span class="icon">▣</span>Сохранение</button><button id="reward" class="action"><span class="icon">★</span>Награда</button>
+            <button id="wiki" class="action"><span class="icon">W</span>Russian Wikipedia</button><button id="ping" class="action"><span class="icon">↯</span>Ping</button>
+            <button id="reset" class="action"><span class="icon">↺</span>Reset</button><button id="disagree" class="action"><span class="icon">×</span>Disagree</button>
+            <button id="import" class="action"><span class="icon">↓</span>Импорт памяти</button><button id="export" class="action"><span class="icon">↑</span>Экспорт памяти</button>
+            <button id="update" class="action wide"><span class="icon">⌘</span>Обновление charlie.py</button>
+          </div>
+        </section>
+        <section class="card full">
+          <div class="card-head"><h2 class="card-title">Память · язык · опыт</h2><span class="badge">СОХРАНЯЕТСЯ ЛОКАЛЬНО</span></div>
+          <pre id="memory" class="log" style="min-height:90px;max-height:160px">Память будет показана после запуска мозга…</pre>
+        </section>
+      </div>
+      <section class="card full">
+        <div class="card-head"><h2 class="card-title">Логи процессов и мозга</h2><span id="logCount" class="badge">0 СОБЫТИЙ</span></div>
+        <pre id="logs" class="log">CHARLIE готовится к запуску…</pre>
+      </section>
+    </section>
+    <p class="footer-note">CHARLIE работает локально в WebView. Интернет используется только для внешних ресурсов Pyodide и обучения.</p>
+  </main>
+  <script>
+    let pyodide, cameraStream, cameraFacing = 'user', tick = 0, startedAt = 0, clockTimer;
+    const $ = (id) => document.getElementById(id);
+    for (let i = 0; i < 64; i += 1) $('activityMap').insertAdjacentHTML('beforeend', '<span class="cell"></span>');
 
-async function chooseBrain(){
-  const f=$('brainFile').files?.[0];if(!f)return;try{const source=await f.text();localStorage.setItem("charlie_python_source",source);await loadBrainSource(source)}catch(e){note("Ошибка загрузки charlie.py: "+e.message)}}
-async function boot(){
-  // Android package ships charlie.py next to index.html. Load it automatically,
-  // so no file picker is needed on first launch.
-  try{
-    const response=await fetch("./charlie.py",{cache:"no-store"});
-    if(response.ok){const source=await response.text();await loadBrainSource(source);return;}
-  }catch(e){console.warn("Bundled charlie.py unavailable",e)}
-  try{const cached=localStorage.getItem("charlie_python_source");if(cached){await loadBrainSource(cached);return}}
-  catch(e){}
-  note("Не удалось загрузить charlie.py из ресурсов приложения.");
-}
-function cmd(c){if(!ready)return note("Сначала загрузите charlie.py");try{brainCmd(c);if(c==="save")saveLocal();if(c==="reset")saveLocal();if(c==="ping")note("Локальное ядро отвечает")}catch(e){note("Команда: "+e.message)}}
-function panel(p,d){if(p==="state"){$("stage").textContent=d.stage||"—";$('state').textContent="Состояние: "+(d.state||"—")+" · интерес "+Number(d.curiosity||0).toFixed(2);if(d.event)$('event').textContent=d.event;$('sleepBadge').textContent=d.sleeping?"💤 сон · консолидация":"☀ бодрствует";$('sleepBadge').className="badge "+(d.sleeping?"sleep":"on");$('internetBadge').textContent=d.internet_learning?"🌐 интернет: обучение":"🌐 источников: "+fmt(d.internet_items);$('internetBadge').className="badge "+(d.internet_learning?"net":"")}else if(p==="nn"){$('nn').innerHTML=stat(fmt(d.neurons),"всего")+stat(fmt(d.input),"вход")+stat(fmt(d.hidden),"hidden")+stat(fmt(d.output),"выход")+stat(fmt(d.steps),"шагов SNN")+stat(fmt(d.input_count),"input spike")+stat(fmt(d.hidden_count),"hidden spike")+stat(fmt(d.output_count),"output spike")+stat(Number(d.hidden_rate||0).toFixed(5),"активность")+stat(Number(d.dopamine||0).toFixed(3),"дофамин")}else if(p==="memory"){$('wikiSource').textContent="Источник: русская Википедия · материалов "+fmt(d.internet_items||0);$('memory').innerHTML=stat(fmt(d.hearing),"слух")+stat(fmt(d.seeing),"зрение")+stat(fmt(d.sound_units),"звуковые единицы")+stat(fmt(d.visual_units),"визуальные")+stat(fmt(d.concepts),"понятия")+stat(fmt(d.sequences),"последовательности")+stat(fmt(d.phonemes),"фонемы")+stat(fmt(d.lexicon),"лексикон")+stat(fmt(d.semantic),"семантика")+stat(fmt(d.transitions),"контекст")+stat(fmt(d.language_steps),"языковые шаги")+stat(fmt(d.vocalizations),"вокализации")}else if(p==="process"){$('process').innerHTML=Object.keys(d.process_last||{}).sort().map(k=>`<div>${k}: ${fmt(d.processes?.[k]||0)} — ${esc(d.process_last[k])}</div>`).join("")}else if(p==="logs"){$('log').innerHTML=d.map(x=>`<div class="line"><span class="time">${x.t}</span> <span class="kind">[${x.kind}]</span> ${esc(x.text)}</div>`).join("");$('log').scrollTop=$('log').scrollHeight}else if(p==="brain")draw(d)}
-function draw(t){const c=$('map'),ctx=c.getContext('2d'),img=ctx.createImageData(W,120),a=img.data;for(let i=0;i<W*120;i++){const p=i*4;a[p]=5;a[p+1]=8;a[p+2]=13;a[p+3]=255}function paint(ids,off,r,g,b){for(const id of ids||[]){const n=off+id;if(n<0||n>=N)continue;const x=n%W,y=Math.floor(n/W),p=(y*W+x)*4;a[p]=r;a[p+1]=g;a[p+2]=b}}paint(t.input_active,0,70,230,160);paint(t.hidden_active,512,245,185,70);paint(t.output_active,23968,180,110,255);ctx.putImageData(img,0,0)}
-function speak(t){if(!t||!("speechSynthesis"in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ru-RU";u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
-async function brainCycle(){if(!ready)return;try{const speech=brainTick(lastAudio,lastFrame);lastAudio=null;lastFrame=null;if(speech)speak(String(speech))}catch(e){note("Такт CHARLIE: "+e.message)}}
-async function updateUI(){if(!ready)return;try{const raw=brainSnap(true);const d=raw?.toJs?raw.toJs({dict_converter:Object.fromEntries}):raw;const lr=brainLogs();const logs=lr?.toJs?lr.toJs():lr;panel("state",d);panel("nn",{neurons:d.neurons,input:d.input_neurons,hidden:d.hidden_neurons,output:d.output_neurons,steps:d.steps,hidden_rate:d.hidden_rate,dopamine:d.dopamine,input_count:d.neurons_live?.input_count,hidden_count:d.neurons_live?.hidden_count,output_count:d.neurons_live?.output_count});panel("memory",d);panel("process",d);panel("logs",logs);panel("brain",d.neurons_live||{})}catch(e){console.warn(e)}}
-async function start(){if(!ready)return note("Загрузите charlie.py");if(running){stop();return}if(!navigator.mediaDevices?.getUserMedia){note("WebView не предоставил доступ к камере/микрофону. Проверьте системные разрешения CHARLIE.");return}try{stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:face},audio:true});$('video').srcObject=stream;running=true;$('start').textContent="■ ОСТАНОВИТЬ СЕНСОРЫ";$('camBadge').textContent="● камера включена";$('camBadge').className="badge on";$('micBadge').textContent="● микрофон включён";$('micBadge').className="badge on";audio=new (window.AudioContext||window.webkitAudioContext)();src=audio.createMediaStreamSource(stream);proc=audio.createScriptProcessor(4096,1,1);proc.onaudioprocess=e=>{if(!running)return;const a=e.inputBuffer.getChannelData(0),x=new Int16Array(a.length);for(let i=0;i<a.length;i++)x[i]=Math.max(-32768,Math.min(32767,a[i]*32767));ab.push(x);if(ab.length>=4){const len=ab.reduce((n,q)=>n+q.length,0),all=new Int16Array(len);let o=0;for(const q of ab){all.set(q,o);o+=q.length}ab=[];lastAudio=Array.from(all)}};src.connect(proc);proc.connect(audio.destination);vt=setInterval(frame,1000)}catch(e){note("Камера/микрофон: "+(e.message||e.name));$('camBadge').textContent="● камера недоступна";$('micBadge').textContent="● микрофон недоступен"}}
-function frame(){if(!running)return;const c=$('capture'),x=c.getContext('2d');x.drawImage($('video'),0,0,32,32);lastFrame=Array.from(x.getImageData(0,0,32,32).data)}
-async function flip(){if(!running)return;face=face==="user"?"environment":"user";try{stream?.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:face},audio:true});$('video').srcObject=stream}catch(e){note("Не удалось переключить камеру: "+e.name)}}
-function stop(){running=false;clearInterval(vt);try{proc?.disconnect();src?.disconnect();audio?.close()}catch(e){}stream?.getTracks().forEach(t=>t.stop());$('video').srcObject=null;$('start').textContent="▶ ЗАПУСТИТЬ СЕНСОРЫ";$('camBadge').textContent="● камера выключена";$('camBadge').className="badge";$('micBadge').textContent="● микрофон выключен";$('micBadge').className="badge";cmd("save")}
-async function wiki(){if(!ready)return;note("Чарли обращается к русской Википедии…");try{brainCmd("ping");const r=await fetch("https://ru.wikipedia.org/api/rest_v1/page/random/summary",{headers:{"Accept":"application/json"}});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();brainArticle(String(d.title||""),String(d.extract||""),"ru.wikipedia.org");note("Изучен источник: "+(d.title||"Русская Википедия"));updateUI()}catch(e){note("Русская Википедия недоступна: "+(e.message||e.name))}}
-async function autoWiki(){if(!ready)return;try{const raw=brainSnap(false),d=raw?.toJs?raw.toJs({dict_converter:Object.fromEntries}):raw;if(d.sleeping||d.internet_learning)return;const r=await fetch("https://ru.wikipedia.org/api/rest_v1/page/random/summary",{headers:{"Accept":"application/json"}});if(!r.ok)throw new Error("HTTP "+r.status);const x=await r.json();brainArticle(String(x.title||""),String(x.extract||""),"ru.wikipedia.org");updateUI()}catch(e){console.warn("CHARLIE internet learning:",e.message||e.name)}}
-$('start').onclick=start;$('flip').onclick=flip;$('sleep').onclick=()=>cmd("sleep");$('wake').onclick=()=>cmd("wake");$('internet').onclick=wiki;$('save').onclick=()=>{cmd("save");saveLocal();note("Память сохранена локально в браузере")};$('reset').onclick=()=>{if(confirm("Удалить сохранённую память CHARLIE и начать обучение заново?")){cmd("reset");saveLocal()}};$('reward').onclick=()=>cmd("reward");$('disagree').onclick=()=>cmd("disagree");$('ping').onclick=()=>cmd("ping");$('brainFile').onchange=chooseBrain;$('memoryFile').onchange=importMemoryFile;
-setInterval(brainCycle,120);setInterval(updateUI,700);setTimeout(autoWiki,10000);setInterval(autoWiki,180000);boot();
-</script></main></body></html>
+    async function runPython(name, ...args) { return pyodide.globals.get(name)(...args); }
+    function setStatus(text, mode = '') { $('statusText').textContent = text; $('status').className = `status ${mode}`; }
+    function renderState(snapshot) {
+      $('snapshot').textContent = snapshot;
+      $('memory').textContent = snapshot;
+      try { const state = JSON.parse(snapshot); $('experienceMetric').textContent = state.experience ?? 0; $('commandMetric').textContent = state.last_command ?? '—'; $('awakeMetric').textContent = state.awake ? 'БОДРСТВ.' : 'СОН'; } catch (_) { /* The brain may return non-JSON text; keep it visible. */ }
+      $('tickMetric').textContent = tick;
+    }
+    async function refresh() {
+      if (!pyodide) return;
+      try { await runPython('browser_tick'); tick += 1; renderState(await runPython('browser_snapshot')); const logs = await runPython('browser_logs'); $('logs').textContent = logs; $('logCount').textContent = `${logs ? logs.split('\n').length : 0} СОБЫТИЙ`; } catch (error) { setStatus(`Ошибка связи с мозгом: ${error}`, 'error'); }
+    }
+    function updateClock() { const elapsed = Math.floor((Date.now() - startedAt) / 1000); $('cameraClock').textContent = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`; }
+    async function startSensors() {
+      stopSensors();
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: cameraFacing } }, audio: true });
+        $('camera').srcObject = cameraStream; $('cameraEmpty').hidden = true; $('recordBadge').classList.add('active'); $('cameraState').textContent = 'СЕНСОРЫ ON'; $('cameraMetric').textContent = 'ON'; $('micMetric').textContent = 'ON'; startedAt = Date.now(); clearInterval(clockTimer); clockTimer = setInterval(updateClock, 1000); updateClock(); await command('sensors_start');
+      } catch (error) { $('cameraEmpty').hidden = false; $('cameraEmpty').innerHTML = `<div><span>Нет доступа к сенсорам</span>${error.message}</div>`; setStatus('Камера или микрофон не разрешены', 'error'); }
+    }
+    function stopSensors() { if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop()); cameraStream = null; $('camera').srcObject = null; $('cameraEmpty').hidden = false; $('recordBadge').classList.remove('active'); $('cameraState').textContent = 'ОЖИДАНИЕ'; $('cameraMetric').textContent = 'OFF'; $('micMetric').textContent = 'OFF'; clearInterval(clockTimer); $('cameraClock').textContent = '00:00'; }
+    async function flipCamera() { cameraFacing = cameraFacing === 'user' ? 'environment' : 'user'; if (cameraStream) await startSensors(); await command('flip_camera'); }
+    async function command(name) { if (!pyodide) return; await runPython('browser_command', name); await refresh(); }
+    async function boot() {
+      try { pyodide = await loadPyodide(); const response = await fetch('./charlie.py'); if (!response.ok) throw new Error('charlie.py не найден'); await pyodide.runPythonAsync(await response.text()); setStatus('CHARLIE готов', 'ready'); await refresh(); setInterval(refresh, 1000); } catch (error) { setStatus(`Ошибка запуска: ${error}`, 'error'); $('logs').textContent = String(error); }
+    }
+    $('sensors').onclick = startSensors; $('stopSensors').onclick = stopSensors; $('flip').onclick = flipCamera;
+    for (const id of ['sleep','wake','save','reward','wiki','ping','reset','disagree','update']) $(id).onclick = () => command(id);
+    $('export').onclick = async () => { localStorage.setItem('charlie-memory', await runPython('browser_export_memory')); await command('memory_export'); };
+    $('import').onclick = async () => { await runPython('browser_import_memory', localStorage.getItem('charlie-memory') || '{}'); await command('memory_import'); };
+    boot();
+  </script>
+</body>
+</html>
